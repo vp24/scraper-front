@@ -46,12 +46,15 @@ const App = () => {
       // Select the <div> element with class "pr-10" and extract its text content
       const footnotes = doc.querySelector('div.pr-10').textContent.trim();
 
+      // Process the tableData for cleaning 
+      const cleanTableData = processData(tableData); 
+
       setData({
         html: sanitizedHTML,
         link: response.data.link,
         cardTitle,
         headerRow,
-        tableData,
+        tableData: cleanTableData, // Use the cleaned data here
         footnotes,
       });
     } catch (error) {
@@ -60,6 +63,21 @@ const App = () => {
 
     setLoading(false);
   };
+
+  // Data cleaning function (modified to remove ONLY newlines)
+  function processData(data) {
+    const formattedData = {};
+    for (const key in data) {
+      formattedData[key] = data[key].map(value => {
+        if (value !== null) {
+          // Remove "\n" only
+          return value.replace(/\n/g, ""); 
+        }
+        return value; // Keep null values as they are
+      });
+    }
+    return formattedData;
+  }
 
   return (
     <div>
@@ -88,12 +106,37 @@ const App = () => {
           <p>{data.footnotes}</p>
           <h3>Header Row:</h3>
           <p>{JSON.stringify(data.headerRow)}</p>
+
+          {/* Existing display */}
           <h3>Table Data:</h3>
           {Object.entries(data.tableData).map(([rowTitle, rowData], index) => (
             <div key={index}>
               <p>{rowTitle} = {JSON.stringify(rowData)}</p>
             </div>
           ))}
+
+          {/* New Table Display */}
+          <h3>Table Data (Table Format):</h3>
+          <table>
+            <thead>
+              <tr>
+                {data.headerRow.map((header, index) => (
+                  <th key={index}>{header}</th>
+                ))}
+              </tr>
+            </thead>
+<tbody>
+  {Object.entries(data.tableData).map(([rowTitle, rowData], index) => (
+    <tr key={index}>
+      <td>{rowTitle}</td>
+      {rowData.map((value, colIndex) => (
+        <td key={colIndex}>{value === null ? '-' : value}</td>
+      ))}
+    </tr>
+  ))}
+</tbody>
+
+          </table>
         </div>
       )}
     </div>
